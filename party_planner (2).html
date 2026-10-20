@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vintage Cake Party Planner</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Default Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@700&family=Courier+Prime&family=Great+Vibes&family=Inter:wght@300;400;600;700&family=MedievalSharp&family=Orbitron:wght@600;900&family=Playfair+Display:ital,wght@0,600;1,400&family=Press+Start+2P&family=Sacramento&family=UnifrakturMaguntia&family=VT323&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #fdf6f0;
+      --card-bg: #ffffff;
+      --accent-color: #d4a373;
+      --text-color: #4a3e3d;
+      --border-color: #f3d5c0;
+      --glow-color: rgba(212, 163, 115, 0.3);
+      --font-header: 'Alex Brush', cursive;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-body);
+      transition: background-color 0.6s ease, color 0.6s ease;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header-font {
+      font-family: var(--font-header);
+    }
+
+    /* Cake Piping Lace Styling */
+    .cake-border {
+      border: 3px dashed var(--border-color);
+      box-shadow: 0 0 15px var(--glow-color), inset 0 0 15px var(--glow-color);
+    }
+
+    .theme-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      box-shadow: 0 10px 25px -5px var(--glow-color);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .theme-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 20px 30px -10px var(--glow-color);
+    }
+
+    /* Floating Canvas */
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Vintage Ribbon Header */
+    .ribbon {
+      position: relative;
+      background: var(--accent-color);
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-color);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-color);
+      border-radius: 4px;
+    }
+
+    /* Keyframe Animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+    .floating-anim {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    /* Responsive View Containers */
+    .view-container {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      z-index: 10;
+      position: relative;
+    }
+    .view-container.active {
+      display: block;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="relative">
+
+  <!-- Background Particle Effects -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- Top Navigation Bar -->
+  <nav id="topNav" class="hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-opacity-80 border-b p-4 transition-colors duration-500" style="background-color: var(--card-bg); border-color: var(--border-color);">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-4">
+      <button id="navBackBtn" onclick="app.goBack()" class="px-4 py-2 rounded-full border transition flex items-center gap-2 hover:opacity-80" style="border-color: var(--border-color); color: var(--text-color);">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </button>
+
+      <h1 class="header-font text-2xl md:text-3xl font-bold cursor-pointer" onclick="app.showView('categoryView')" style="color: var(--accent-color);">
+        Party Planning Studio
+      </h1>
+
+      <div class="flex items-center gap-3">
+        <button onclick="app.toggleBookmarks Drawer()" class="px-3 py-2 rounded-full border relative hover:opacity-80" style="border-color: var(--border-color);">
+          <i class="fa-solid fa-bookmark" style="color: var(--accent-color);"></i>
+          <span id="bookmarkBadge" class="absolute -top-1 -right-1 text-xs px-1.5 py-0.5 rounded-full bg-red-500 text-white font-bold hidden">0</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- VIEW 1: LANDING PAGE -->
+  <section id="landingView" class="view-container active min-h-screen flex flex-col justify-center items-center text-center p-6 cursor-pointer select-none" onclick="app.showView('categoryView')">
+    <div class="max-w-3xl p-8 md:p-12 rounded-3xl cake-border bg-opacity-90 backdrop-blur-md floating-anim" style="background-color: var(--card-bg);">
+      <div class="text-5xl md:text-7xl mb-4" style="color: var(--accent-color);">
+        <i class="fa-solid fa-cake-candles"></i>
+      </div>
+      <h1 class="header-font text-4xl md:text-7xl font-extrabold mb-4" style="color: var(--text-color);">
+        Welcome party planners！！！
+      </h1>
+      <div class="w-24 h-1 mx-auto my-4 rounded-full" style="background-color: var(--accent-color);"></div>
+      <p class="text-lg md:text-2xl italic mb-8" style="color: var(--text-color);">
+        Step into a world of curated celebrations... Click anywhere to begin.
+      </p>
+      <span class="inline-block px-6 py-3 rounded-full text-white font-semibold text-sm shadow-lg transition hover:scale-105" style="background-color: var(--accent-color);">
+        Enter Celebration Atelier <i class="fa-solid fa-wand-magic-sparkles ml-2"></i>
+      </span>
+    </div>
+  </section>
+
+  <!-- VIEW 2: CATEGORY SELECTION -->
+  <section id="categoryView" class="view-container pt-24 pb-16 px-4 max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="header-font text-4xl md:text-6xl font-bold mb-3" style="color: var(--accent-color);">Choose Your Inspiration</h2>
+      <p class="text-base md:text-lg opacity-80 max-w-xl mx-auto">Select a category medallion to reveal tailored themes for your special event.</p>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="max-w-md mx-auto mb-10 relative">
+      <input type="text" id="searchInput" oninput="app.handleSearch(this.value)" placeholder="Search themes (e.g. Harry Potter, Vintage, Pink)..." class="w-full py-3 px-10 rounded-full border shadow-sm focus:outline-none transition" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-color);">
+      <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 opacity-50"></i>
+    </div>
+
+    <!-- 10 Circular Medallions Grid -->
+    <div id="medallionsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-8 max-w-5xl mx-auto">
+      <!-- Generated via JS -->
+    </div>
+  </section>
+
+  <!-- VIEW 3: SUBCATEGORY / THEME LIST VIEW -->
+  <section id="subcategoryView" class="view-container pt-24 pb-16 px-4 max-w-7xl mx-auto">
+    <div class="text-center mb-10">
+      <h2 id="currentCategoryTitle" class="header-font text-4xl md:text-6xl font-bold mb-2" style="color: var(--accent-color);">Subcategories</h2>
+      <p id="currentCategoryDesc" class="text-sm md:text-base opacity-80">Pick a aesthetic direction to instantly morph your atelier space.</p>
+    </div>
+
+    <div id="themeCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Generated via JS -->
+    </div>
+  </section>
+
+  <!-- VIEW 4: THEME DETAILS SCREEN -->
+  <section id="themeDetailView" class="view-container pt-24 pb-20 px-4 max-w-6xl mx-auto">
+    <!-- Theme Hero Header -->
+    <div class="theme-card rounded-3xl p-8 mb-8 text-center relative overflow-hidden">
+      <div class="absolute top-4 right-4 flex gap-2">
+        <button onclick="app.toggleBookmarkCurrent()" id="bookmarkBtn" class="p-3 rounded-full border bg-white/50 backdrop-blur-sm transition">
+          <i class="fa-regular fa-bookmark text-xl" id="bookmarkIcon"></i>
+        </button>
+      </div>
+
+      <h1 id="themeTitle" class="header-font text-5xl md:text-7xl font-bold mb-4">Theme Title</h1>
+      <p id="themeTagline" class="text-lg md:text-xl italic opacity-90 max-w-2xl mx-auto mb-6">Aesthetic Tagline</p>
+      
+      <!-- Palette Chips -->
+      <div id="paletteChips" class="flex justify-center items-center gap-3 my-4"></div>
+    </div>
+
+    <!-- Content Sections Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+      <!-- 1. Atmosphere & Vibe Overview -->
+      <div class="theme-card rounded-2xl p-6">
+        <h3 class="header-font text-3xl font-bold mb-4 flex items-center gap-3">
+          <i class="fa-solid fa-masks-theater text-2xl"></i> Atmosphere & Vibe
+        </h3>
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-bold text-sm uppercase tracking-wider mb-1 opacity-70">Dress Code</h4>
+            <p id="dressCodeText" class="text-sm leading-relaxed"></p>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm uppercase tracking-wider mb-1 opacity-70">Background Music Ideas</h4>
+            <ul id="playlistList" class="list-disc list-inside text-sm space-y-1"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Food & Beverages -->
+      <div class="theme-card rounded-2xl p-6">
+        <h3 class="header-font text-3xl font-bold mb-4 flex items-center gap-3">
+          <i class="fa-solid fa-utensils text-2xl"></i> Culinary & Drinks
+        </h3>
+        <div class="space-y-3 text-sm">
+          <div><span class="font-bold">Signature Cocktail:</span> <span id="cocktailText"></span></div>
+          <div><span class="font-bold">Themed Appetizers:</span> <span id="appetizerText"></span></div>
+          <div><span class="font-bold">Main Dishes:</span> <span id="mainDishText"></span></div>
+          <div><span class="font-bold">Dessert Table:</span> <span id="dessertText"></span></div>
+        </div>
+      </div>
+
+      <!-- 3. Decorations & Setup -->
+      <div class="theme-card rounded-2xl p-6">
+        <h3 class="header-font text-3xl font-bold mb-4 flex items-center gap-3">
+          <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i> Decor & Setup
+        </h3>
+        <ul id="decorList" class="list-disc list-inside text-sm space-y-2"></ul>
+      </div>
+
+      <!-- 4. Games & Activities -->
+      <div class="theme-card rounded-2xl p-6">
+        <h3 class="header-font text-3xl font-bold mb-4 flex items-center gap-3">
+          <i class="fa-solid fa-dice text-2xl"></i> Games & Activities
+        </h3>
+        <ul id="gamesList" class="list-disc list-inside text-sm space-y-2"></ul>
+      </div>
+    </div>
+
+    <!-- 5. Interactive Party Checklist -->
+    <div class="theme-card rounded-2xl p-6 md:p-8 mb-12">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <h3 class="header-font text-3xl font-bold">Party To-Do Checklist</h3>
+          <p class="text-xs opacity-70">Track your planning progress step by step.</p>
+        </div>
+        <div class="w-full md:w-1/3">
+          <div class="flex justify-between text-xs mb-1">
+            <span>Completion</span>
+            <span id="checklistPercent">0%</span>
+          </div>
+          <div class="w-full h-3 rounded-full overflow-hidden bg-black/10">
+            <div id="checklistProgressBar" class="h-full transition-all duration-300" style="width: 0%; background-color: var(--accent-color);"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="checklistContainer" class="space-y-3">
+        <!-- Generated checkboxes -->
+      </div>
+    </div>
+
+    <!-- Action Bar: Invitation Generator Button -->
+    <div class="text-center">
+      <button onclick="app.openInvitationModal()" class="px-8 py-4 rounded-full font-bold text-white shadow-xl hover:scale-105 transition duration-300 flex items-center gap-3 mx-auto" style="background-color: var(--accent-color);">
+        <i class="fa-solid fa-envelope-open-text text-xl"></i> Create Customized Invitation Card
+      </button>
+    </div>
+  </section>
+
+  <!-- INVITATION MODAL -->
+  <div id="invitationModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="theme-card rounded-3xl max-w-xl w-full p-6 md:p-8 relative my-8">
+      <button onclick="app.closeInvitationModal()" class="absolute top-4 right-4 text-xl opacity-70 hover:opacity-100">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="header-font text-3xl font-bold text-center mb-6">Custom Party Invitation</h3>
+
+      <!-- Input Form -->
+      <div class="grid grid-cols-1 gap-4 mb-6 text-sm">
+        <div>
+          <label class="block font-bold mb-1 opacity-80">Host / Honoree Name</label>
+          <input type="text" id="invHost" value="Sophia" oninput="app.updateInvitationPreview()" class="w-full p-2.5 rounded-lg border focus:outline-none" style="background-color: var(--card-bg); border-color: var(--border-color);">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold mb-1 opacity-80">Date</label>
+            <input type="date" id="invDate" value="2026-11-15" onchange="app.updateInvitationPreview()" class="w-full p-2.5 rounded-lg border focus:outline-none" style="background-color: var(--card-bg); border-color: var(--border-color);">
+          </div>
+          <div>
+            <label class="block font-bold mb-1 opacity-80">Time</label>
+            <input type="time" id="invTime" value="18:00" onchange="app.updateInvitationPreview()" class="w-full p-2.5 rounded-lg border focus:outline-none" style="background-color: var(--card-bg); border-color: var(--border-color);">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-1 opacity-80">Location / Venue</label>
+          <input type="text" id="invLocation" value="The Grand Ballroom & Conservatory" oninput="app.updateInvitationPreview()" class="w-full p-2.5 rounded-lg border focus:outline-none" style="background-color: var(--card-bg); border-color: var(--border-color);">
+        </div>
+      </div>
+
+      <!-- Live Preview Card -->
+      <div id="invitationCard" class="cake-border rounded-2xl p-6 text-center space-y-3 relative my-4" style="background-color: var(--bg-color); color: var(--text-color);">
+        <p class="text-xs tracking-widest uppercase opacity-70">YOU ARE CORDIALLY INVITED TO THE CELEBRATION OF</p>
+        <h4 id="cardHost" class="header-font text-4xl font-bold">Sophia's Party</h4>
+        <div class="w-12 h-0.5 mx-auto opacity-40" style="background-color: var(--accent-color);"></div>
+        <p id="cardTheme" class="italic text-sm font-semibold"></p>
+        <div class="text-xs space-y-1 opacity-90 my-2">
+          <p id="cardDateTime"><i class="fa-regular fa-calendar mr-1"></i> November 15, 2026 at 6:00 PM</p>
+          <p id="cardLoc"><i class="fa-solid fa-location-dot mr-1"></i> The Grand Ballroom & Conservatory</p>
+        </div>
+        <p class="text-xs italic opacity-70 mt-4">RSVP Required • Dress Code Inspired</p>
+      </div>
+
+      <!-- Print/Download Action -->
+      <button onclick="window.print()" class="w-full py-3 rounded-full text-white font-bold transition shadow" style="background-color: var(--accent-color);">
+        <i class="fa-solid fa-print mr-2"></i> Print / Save Invitation Card
+      </button>
+    </div>
+  </div>
+
+  <!-- BOOKMARKS DRAWER -->
+  <div id="bookmarksDrawer" class="fixed top-0 right-0 bottom-0 w-80 z-50 shadow-2xl transition-transform duration-300 transform translate-x-full p-6 flex flex-col" style="background-color: var(--card-bg); border-left: 2px solid var(--border-color);">
+    <div class="flex justify-between items-center mb-6 border-b pb-3" style="border-color: var(--border-color);">
+      <h3 class="header-font text-2xl font-bold">Saved Themes</h3>
+      <button onclick="app.toggleBookmarksDrawer()" class="text-lg opacity-70 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="bookmarksList" class="flex-1 overflow-y-auto space-y-3">
+      <!-- Dynamic list -->
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION CORE -->
+  <script>
+    // DATA MATRIX FOR CATEGORIES AND ALL SUBCATEGORIES
+    const partyData = {
+      categories: [
+        { id: "color", title: "Color", icon: "fa-palette", desc: "Aesthetic color spectrum parties" },
+        { id: "mood", title: "Mood", icon: "fa-face-smile", desc: "Vibe and emotional atmosphere" },
+        { id: "festival", title: "Festival", icon: "fa-champagne-glasses", desc: "Seasonal holidays and feasts" },
+        { id: "season", title: "Season", icon: "fa-sun", desc: "Four seasonal party moods" },
+        { id: "food", title: "Food", icon: "fa-burger", desc: "Gourmet and culinary feasts" },
+        { id: "country", title: "Country", icon: "fa-earth-americas", desc: "Cultural & international themes" },
+        { id: "books", title: "Books", icon: "fa-book-open", desc: "Literary classic celebrations" },
+        { id: "tvshows", title: "TV Shows", icon: "fa-tv", desc: "Binge-worthy show aesthetics" },
+        { id: "films", title: "Films", icon: "fa-film", desc: "Cinematic movie universe parties" },
+        { id: "songs", title: "Songs", icon: "fa-music", desc: "Iconic artist & music vibes" }
+      ],
+      themes: {
+        // COLOR
+        "Red": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#2b0a0a", card: "#3d1212", accent: "#ff4d4d", text: "#fce8e8", border: "#802020", glow: "rgba(255, 77, 77, 0.4)", particle: "ember" },
+        "Orange": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#2e1905", card: "#422509", accent: "#ff944d", text: "#ffedd5", border: "#9a521a", glow: "rgba(255, 148, 77, 0.4)", particle: "gold" },
+        "Yellow": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#2a2405", card: "#3f370b", accent: "#ffd633", text: "#fefce8", border: "#998214", glow: "rgba(255, 214, 51, 0.4)", particle: "gold" },
+        "Green": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#092411", card: "#11381c", accent: "#4ded88", text: "#e8fcf0", border: "#21733a", glow: "rgba(77, 237, 136, 0.4)", particle: "sparks" },
+        "Cyan": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#062229", card: "#0c3742", accent: "#33e0ff", text: "#e6fcff", border: "#187082", glow: "rgba(51, 224, 255, 0.4)", particle: "sparks" },
+        "Blue": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#0a192f", card: "#112240", accent: "#64ffda", text: "#e6f1ff", border: "#233554", glow: "rgba(100, 255, 218, 0.3)", particle: "sparks" },
+        "Purple": { cat: "color", fontH: "Playfair Display", fontB: "Inter", bg: "#1a0b2e", card: "#281245", accent: "#b366ff", text: "#f3e8ff", border: "#582396", glow: "rgba(179, 102, 255, 0.4)", particle: "sparks" },
+        "Black": { cat: "color", fontH: "Cinzel", fontB: "Inter", bg: "#0d0d0d", card: "#1a1a1a", accent: "#d4af37", text: "#f2f2f2", border: "#333333", glow: "rgba(212, 175, 55, 0.3)", particle: "gold" },
+        "Pink": { cat: "color", fontH: "Sacramento", fontB: "Inter", bg: "#2b0a1a", card: "#42122b", accent: "#ff66b2", text: "#ffe6f2", border: "#8c2359", glow: "rgba(255, 102, 178, 0.4)", particle: "petals" },
+        "Beige": { cat: "color", fontH: "Alex Brush", fontB: "Inter", bg: "#fdf8f2", card: "#ffffff", accent: "#c59b27", text: "#4a3f35", border: "#e8d8c3", glow: "rgba(197, 155, 39, 0.2)", particle: "gold" },
+        "Pure White": { cat: "color", fontH: "Alex Brush", fontB: "Inter", bg: "#f8fafc", card: "#ffffff", accent: "#94a3b8", text: "#1e293b", border: "#e2e8f0", glow: "rgba(148, 163, 184, 0.2)", particle: "snow" },
+
+        // MOOD
+        "Sad": { cat: "mood", fontH: "Playfair Display", fontB: "Inter", bg: "#0f172a", card: "#1e293b", accent: "#38bdf8", text: "#f1f5f9", border: "#334155", glow: "rgba(56, 189, 248, 0.3)", particle: "snow" },
+        "Happy": { cat: "mood", fontH: "Great Vibes", fontB: "Inter", bg: "#fefce8", card: "#ffffff", accent: "#f59e0b", text: "#451a03", border: "#fde68a", glow: "rgba(245, 158, 11, 0.3)", particle: "gold" },
+        "Heartbreak": { cat: "mood", fontH: "Playfair Display", fontB: "Inter", bg: "#1f0910", card: "#34101c", accent: "#f43f5e", text: "#ffe4e6", border: "#701a32", glow: "rgba(244, 63, 94, 0.4)", particle: "petals" },
+        "Rush": { cat: "mood", fontH: "Orbitron", fontB: "Inter", bg: "#09090b", card: "#18181b", accent: "#22c55e", text: "#f4f4f5", border: "#27272a", glow: "rgba(34, 197, 94, 0.4)", particle: "grid" },
+        "Crazy": { cat: "mood", fontH: "Press Start 2P", fontB: "Inter", bg: "#2e0854", card: "#43127a", accent: "#f0abfc", text: "#fae8ff", border: "#701a9c", glow: "rgba(240, 171, 252, 0.4)", particle: "sparks" },
+        "Sexy": { cat: "mood", fontH: "Sacramento", fontB: "Inter", bg: "#1a0307", card: "#30060e", accent: "#e11d48", text: "#ffe4e6", border: "#6b0d21", glow: "rgba(225, 29, 72, 0.4)", particle: "petals" },
+
+        // FESTIVAL
+        "Halloween": { cat: "festival", fontH: "UnifrakturMaguntia", fontB: "Inter", bg: "#120a03", card: "#241407", accent: "#f97316", text: "#ffedd5", border: "#66320a", glow: "rgba(249, 115, 22, 0.4)", particle: "ember" },
+        "Christmas": { cat: "festival", fontH: "Cinzel Decorative", fontB: "Inter", bg: "#06170c", card: "#0e2b17", accent: "#ef4444", text: "#f0fdf4", border: "#1c542e", glow: "rgba(239, 68, 68, 0.4)", particle: "snow" },
+        "Thanksgiving": { cat: "festival", fontH: "Playfair Display", fontB: "Inter", bg: "#1c0d02", card: "#331905", accent: "#d97706", text: "#fef3c7", border: "#783807", glow: "rgba(217, 119, 6, 0.4)", particle: "gold" },
+        "National Day": { cat: "festival", fontH: "Cinzel", fontB: "Inter", bg: "#0f172a", card: "#1e293b", accent: "#ef4444", text: "#f8fafc", border: "#334155", glow: "rgba(239, 68, 68, 0.4)", particle: "sparks" },
+        "Valentine's Day": { cat: "festival", fontH: "Great Vibes", fontB: "Inter", bg: "#2a0813", card: "#450e20", accent: "#fb7185", text: "#ffe4e6", border: "#881e3d", glow: "rgba(251, 113, 133, 0.4)", particle: "petals" },
+        "Spring Break": { cat: "festival", fontH: "Great Vibes", fontB: "Inter", bg: "#042f2e", card: "#0d4744", accent: "#2dd4bf", text: "#ccfbf1", border: "#136660", glow: "rgba(45, 212, 191, 0.4)", particle: "sparks" },
+
+        // SEASON
+        "Spring": { cat: "season", fontH: "Sacramento", fontB: "Inter", bg: "#052e16", card: "#0f4223", accent: "#4ade80", text: "#f0fdf4", border: "#1a6637", glow: "rgba(74, 222, 128, 0.4)", particle: "petals" },
+        "Summer": { cat: "season", fontH: "Great Vibes", fontB: "Inter", bg: "#1e1b4b", card: "#2e2a72", accent: "#fbbf24", text: "#e0e7ff", border: "#4338ca", glow: "rgba(251, 191, 36, 0.4)", particle: "gold" },
+        "Autumn": { cat: "season", fontH: "Playfair Display", fontB: "Inter", bg: "#2a0c02", card: "#451605", accent: "#f97316", text: "#ffedd5", border: "#872d0d", glow: "rgba(249, 115, 22, 0.4)", particle: "ember" },
+        "Winter": { cat: "season", fontH: "Cinzel", fontB: "Inter", bg: "#082f49", card: "#0c4a6e", accent: "#38bdf8", text: "#f0f9ff", border: "#164e63", glow: "rgba(56, 189, 248, 0.4)", particle: "snow" },
+
+        // FOOD
+        "BBQ & Grill": { cat: "food", fontH: "Playfair Display", fontB: "Inter", bg: "#1c0a00", card: "#331402", accent: "#ea580c", text: "#ffedd5", border: "#7c2d12", glow: "rgba(234, 88, 12, 0.4)", particle: "ember" },
+        "Fresh Veggies & Salads": { cat: "food", fontH: "Playfair Display", fontB: "Inter", bg: "#062312", card: "#0e381f", accent: "#22c55e", text: "#f0fdf4", border: "#15803d", glow: "rgba(34, 197, 94, 0.4)", particle: "sparks" },
+        "Decadent Desserts": { cat: "food", fontH: "Alex Brush", fontB: "Inter", bg: "#2a081a", card: "#45102d", accent: "#f472b6", text: "#fce7f3", border: "#831843", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+
+        // COUNTRY
+        "Japan": { cat: "country", fontH: "Cinzel", fontB: "Inter", bg: "#1a0509", card: "#330c13", accent: "#f43f5e", text: "#ffe4e6", border: "#701a28", glow: "rgba(244, 63, 94, 0.4)", particle: "petals" },
+        "India": { cat: "country", fontH: "Cinzel", fontB: "Inter", bg: "#2a0802", card: "#471105", accent: "#f97316", text: "#ffedd5", border: "#85250d", glow: "rgba(249, 115, 22, 0.4)", particle: "gold" },
+        "United States": { cat: "country", fontH: "Cinzel", fontB: "Inter", bg: "#0f172a", card: "#1e293b", accent: "#ef4444", text: "#f8fafc", border: "#334155", glow: "rgba(239, 68, 68, 0.4)", particle: "sparks" },
+        "South Korea": { cat: "country", fontH: "Orbitron", fontB: "Inter", bg: "#0b0f19", card: "#161e31", accent: "#38bdf8", text: "#f0f9ff", border: "#253352", glow: "rgba(56, 189, 248, 0.4)", particle: "sparks" },
+        "China": { cat: "country", fontH: "Cinzel", fontB: "Inter", bg: "#2b0404", card: "#470a0a", accent: "#eab308", text: "#fefce8", border: "#8a1414", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+        "United Kingdom": { cat: "country", fontH: "Playfair Display", fontB: "Inter", bg: "#0f172a", card: "#1e293b", accent: "#cbd5e1", text: "#f8fafc", border: "#334155", glow: "rgba(203, 213, 225, 0.3)", particle: "gold" },
+        "Italy": { cat: "country", fontH: "Playfair Display", fontB: "Inter", bg: "#022c22", card: "#064e3b", accent: "#ef4444", text: "#ecfdf5", border: "#047857", glow: "rgba(239, 68, 68, 0.4)", particle: "gold" },
+        "France": { cat: "country", fontH: "Alex Brush", fontB: "Inter", bg: "#fdf8f6", card: "#ffffff", accent: "#fb7185", text: "#4c0519", border: "#fecdd3", glow: "rgba(251, 113, 133, 0.3)", particle: "petals" },
+        "Australia": { cat: "country", fontH: "Playfair Display", fontB: "Inter", bg: "#042f2e", card: "#0d4744", accent: "#f59e0b", text: "#ccfbf1", border: "#136660", glow: "rgba(245, 158, 11, 0.4)", particle: "gold" },
+        "Thailand": { cat: "country", fontH: "Cinzel", fontB: "Inter", bg: "#1c022b", card: "#32064d", accent: "#eab308", text: "#faf5ff", border: "#5b0d8a", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+
+        // BOOKS
+        "Shakespeare": { cat: "books", fontH: "MedievalSharp", fontB: "Inter", bg: "#1a0f07", card: "#2e1c0e", accent: "#d4af37", text: "#fef3c7", border: "#5e3a1d", glow: "rgba(212, 175, 55, 0.4)", particle: "gold" },
+        "Pride and Prejudice": { cat: "books", fontH: "Playfair Display", fontB: "Inter", bg: "#fdf8f6", card: "#ffffff", accent: "#86efac", text: "#14532d", border: "#bbf7d0", glow: "rgba(134, 239, 172, 0.3)", particle: "petals" },
+        "The Chronicles of Narnia": { cat: "books", fontH: "Cinzel", fontB: "Inter", bg: "#082f49", card: "#0c4a6e", accent: "#bae6fd", text: "#f0f9ff", border: "#164e63", glow: "rgba(186, 230, 253, 0.4)", particle: "snow" },
+        "Harry Potter": { cat: "books", fontH: "Cinzel Decorative", fontB: "Inter", bg: "#0f091a", card: "#1e1333", accent: "#eab308", text: "#faf5ff", border: "#432870", glow: "rgba(234, 179, 8, 0.4)", particle: "sparks" },
+        "Grimm's Fairy Tales": { cat: "books", fontH: "UnifrakturMaguntia", fontB: "Inter", bg: "#051f11", card: "#0b3820", accent: "#a7f3d0", text: "#ecfdf5", border: "#166534", glow: "rgba(167, 243, 208, 0.4)", particle: "sparks" },
+
+        // TV SHOWS
+        "Grey's Anatomy": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#082f49", card: "#0e4a6e", accent: "#38bdf8", text: "#f0f9ff", border: "#155e75", glow: "rgba(56, 189, 248, 0.3)", particle: "sparks" },
+        "Modern Family": { cat: "tvshows", fontH: "Great Vibes", fontB: "Inter", bg: "#fefce8", card: "#ffffff", accent: "#ca8a04", text: "#422006", border: "#fef08a", glow: "rgba(202, 138, 4, 0.3)", particle: "gold" },
+        "Friends": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#1f1105", card: "#38200b", accent: "#f97316", text: "#ffedd5", border: "#7c3e12", glow: "rgba(249, 115, 22, 0.4)", particle: "gold" },
+        "How I Met Your Mother": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#1a1603", card: "#332c07", accent: "#facc15", text: "#fefce8", border: "#73630f", glow: "rgba(250, 204, 21, 0.4)", particle: "gold" },
+        "Brooklyn Nine-Nine": { cat: "tvshows", fontH: "Orbitron", fontB: "Inter", bg: "#031424", card: "#09253d", accent: "#38bdf8", text: "#f0f9ff", border: "#12436b", glow: "rgba(56, 189, 248, 0.4)", particle: "sparks" },
+        "Gossip Girl": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#1a0814", card: "#331229", accent: "#f472b6", text: "#fce7f3", border: "#6e2158", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+        "The Office": { cat: "tvshows", fontH: "Courier Prime", fontB: "Courier Prime", bg: "#111827", card: "#1f2937", accent: "#9ca3af", text: "#f3f4f6", border: "#374151", glow: "rgba(156, 163, 175, 0.3)", particle: "grid" },
+        "Breaking Bad": { cat: "tvshows", fontH: "Orbitron", fontB: "Inter", bg: "#081c10", card: "#11331f", accent: "#22c55e", text: "#f0fdf4", border: "#1d5c38", glow: "rgba(34, 197, 94, 0.4)", particle: "sparks" },
+        "Twin Peaks": { cat: "tvshows", fontH: "Cinzel", fontB: "Inter", bg: "#1a0307", card: "#330811", accent: "#ef4444", text: "#ffe4e6", border: "#6e1322", glow: "rgba(239, 68, 68, 0.4)", particle: "ember" },
+        "Fleabag": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#0d0d0d", card: "#1a1a1a", accent: "#dc2626", text: "#f8fafc", border: "#404040", glow: "rgba(220, 38, 38, 0.4)", particle: "ember" },
+        "The Big Bang Theory": { cat: "tvshows", fontH: "Orbitron", fontB: "Inter", bg: "#03122b", card: "#0a224a", accent: "#60a5fa", text: "#eff6ff", border: "#173f7a", glow: "rgba(96, 165, 250, 0.4)", particle: "sparks" },
+        "Off Campus": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#0f172a", card: "#1e293b", accent: "#f43f5e", text: "#f8fafc", border: "#334155", glow: "rgba(244, 63, 94, 0.3)", particle: "sparks" },
+        "Game of Thrones": { cat: "tvshows", fontH: "Cinzel", fontB: "Inter", bg: "#050b14", card: "#0c1729", accent: "#94a3b8", text: "#f8fafc", border: "#1e2e4a", glow: "rgba(148, 163, 184, 0.3)", particle: "snow" },
+        "The X-Files": { cat: "tvshows", fontH: "VT323", fontB: "Inter", bg: "#021208", card: "#062412", accent: "#4ade80", text: "#f0fdf4", border: "#0d4d27", glow: "rgba(74, 222, 128, 0.4)", particle: "grid" },
+        "Mad Men": { cat: "tvshows", fontH: "Playfair Display", fontB: "Inter", bg: "#170e08", card: "#2e1d12", accent: "#ea580c", text: "#ffedd5", border: "#573520", glow: "rgba(234, 88, 12, 0.3)", particle: "gold" },
+        "Stranger Things": { cat: "tvshows", fontH: "Press Start 2P", fontB: "VT323", bg: "#090003", card: "#1c0008", accent: "#ff0033", text: "#ffe6ec", border: "#660014", glow: "rgba(255, 0, 51, 0.5)", particle: "ember" },
+        "Sex and the City": { cat: "tvshows", fontH: "Sacramento", fontB: "Inter", bg: "#230617", card: "#3b0d28", accent: "#f472b6", text: "#fce7f3", border: "#731c51", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+
+        // FILMS
+        "Harry Potter Series": { cat: "films", fontH: "Cinzel Decorative", fontB: "Inter", bg: "#0b0714", card: "#171026", accent: "#eab308", text: "#faf5ff", border: "#3b2361", glow: "rgba(234, 179, 8, 0.4)", particle: "sparks" },
+        "Frozen": { cat: "films", fontH: "Cinzel", fontB: "Inter", bg: "#041e2e", card: "#093552", accent: "#7dd3fc", text: "#f0f9ff", border: "#125782", glow: "rgba(125, 211, 252, 0.4)", particle: "snow" },
+        "Mamma Mia!": { cat: "films", fontH: "Great Vibes", fontB: "Inter", bg: "#032030", card: "#083652", accent: "#38bdf8", text: "#f0f9ff", border: "#105a87", glow: "rgba(56, 189, 248, 0.4)", particle: "sparks" },
+        "Chicago": { cat: "films", fontH: "Cinzel", fontB: "Inter", bg: "#1c0308", card: "#330811", accent: "#eab308", text: "#ffe4e6", border: "#6e1223", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+        "The Parent Trap": { cat: "films", fontH: "Alex Brush", fontB: "Inter", bg: "#fdf8f6", card: "#ffffff", accent: "#f472b6", text: "#4c0519", border: "#fecdd3", glow: "rgba(244, 114, 182, 0.3)", particle: "petals" },
+        "Pretty Woman": { cat: "films", fontH: "Sacramento", fontB: "Inter", bg: "#23050c", card: "#3d0b17", accent: "#fb7185", text: "#ffe4e6", border: "#781830", glow: "rgba(251, 113, 133, 0.4)", particle: "petals" },
+        "13 Going on 30": { cat: "films", fontH: "Great Vibes", fontB: "Inter", bg: "#2b071e", card: "#450e32", accent: "#f472b6", text: "#fce7f3", border: "#801d5d", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+        "Wild Child": { cat: "films", fontH: "Sacramento", fontB: "Inter", bg: "#2b0518", card: "#470c2a", accent: "#ff66cc", text: "#ffe6f7", border: "#8a1954", glow: "rgba(255, 102, 204, 0.4)", particle: "petals" },
+        "The Karate Kid": { cat: "films", fontH: "Orbitron", fontB: "Inter", bg: "#1c0a03", card: "#331508", accent: "#f97316", text: "#ffedd5", border: "#732f14", glow: "rgba(249, 115, 22, 0.4)", particle: "gold" },
+        "Ferris Bueller's Day Off": { cat: "films", fontH: "VT323", fontB: "Inter", bg: "#031b26", card: "#083145", accent: "#22d3ee", text: "#ecfeff", border: "#115273", glow: "rgba(34, 211, 238, 0.4)", particle: "sparks" },
+        "In the Mood for Love": { cat: "films", fontH: "Playfair Display", fontB: "Inter", bg: "#210303", card: "#380808", accent: "#ef4444", text: "#fef2f2", border: "#781414", glow: "rgba(239, 68, 68, 0.4)", particle: "ember" },
+        "Devdas": { cat: "films", fontH: "Cinzel", fontB: "Inter", bg: "#240a02", card: "#3d1305", accent: "#eab308", text: "#fffbebe", border: "#782a0e", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+        "La La Land": { cat: "films", fontH: "Great Vibes", fontB: "Inter", bg: "#0d0b2b", card: "#19154a", accent: "#facc15", text: "#eef2ff", border: "#322b82", glow: "rgba(250, 204, 21, 0.4)", particle: "sparks" },
+        "Before Sunrise Trilogy": { cat: "films", fontH: "Playfair Display", fontB: "Inter", bg: "#1c0f0a", card: "#331c14", accent: "#fb923c", text: "#ffedd5", border: "#693b2c", glow: "rgba(251, 146, 60, 0.3)", particle: "gold" },
+        "Edward Scissorhands": { cat: "films", fontH: "UnifrakturMaguntia", fontB: "Inter", bg: "#050d1a", card: "#0d1a30", accent: "#94a3b8", text: "#f8fafc", border: "#223554", glow: "rgba(148, 163, 184, 0.3)", particle: "snow" },
+        "The Notebook": { cat: "films", fontH: "Alex Brush", fontB: "Inter", bg: "#1a080c", card: "#33121a", accent: "#f43f5e", text: "#ffe4e6", border: "#6e2133", glow: "rgba(244, 63, 94, 0.4)", particle: "petals" },
+        "Flipped": { cat: "films", fontH: "Great Vibes", fontB: "Inter", bg: "#062112", card: "#0d3820", accent: "#4ade80", text: "#f0fdf4", border: "#175e37", glow: "rgba(74, 222, 128, 0.3)", particle: "petals" },
+        "Diary of a Wimpy Kid": { cat: "films", fontH: "Courier Prime", fontB: "Inter", bg: "#1f1f1f", card: "#2e2e2e", accent: "#facc15", text: "#f5f5f5", border: "#4a4a4a", glow: "rgba(250, 204, 21, 0.3)", particle: "grid" },
+        "Fight Club": { cat: "films", fontH: "Courier Prime", fontB: "Inter", bg: "#0a0a0a", card: "#171717", accent: "#ec4899", text: "#fafafa", border: "#333333", glow: "rgba(236, 72, 153, 0.4)", particle: "ember" },
+        "The Conjuring": { cat: "films", fontH: "UnifrakturMaguntia", fontB: "Inter", bg: "#050505", card: "#121212", accent: "#a855f7", text: "#f3e8ff", border: "#2a2a2a", glow: "rgba(168, 85, 247, 0.4)", particle: "ember" },
+        "The Lord of the Rings": { cat: "films", fontH: "Cinzel Decorative", fontB: "Inter", bg: "#0c0f0a", card: "#1a2116", accent: "#eab308", text: "#f0fdf4", border: "#33422c", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+        "Star Wars": { cat: "films", fontH: "Orbitron", fontB: "Inter", bg: "#030712", card: "#0f172a", accent: "#38bdf8", text: "#f8fafc", border: "#1e293b", glow: "rgba(56, 189, 248, 0.4)", particle: "sparks" },
+        "Marvel Cinematic Universe": { cat: "films", fontH: "Orbitron", fontB: "Inter", bg: "#180202", card: "#2e0808", accent: "#ef4444", text: "#fef2f2", border: "#5e1515", glow: "rgba(239, 68, 68, 0.4)", particle: "sparks" },
+        "007 James Bond": { cat: "films", fontH: "Cinzel", fontB: "Inter", bg: "#0a0a0a", card: "#171717", accent: "#d4af37", text: "#ffffff", border: "#333333", glow: "rgba(212, 175, 55, 0.4)", particle: "gold" },
+        "The Hunger Games": { cat: "films", fontH: "Cinzel", fontB: "Inter", bg: "#1c0601", card: "#330e03", accent: "#f97316", text: "#ffedd5", border: "#6e2009", glow: "rgba(249, 115, 22, 0.4)", particle: "ember" },
+        "Dune": { cat: "films", fontH: "Orbitron", fontB: "Inter", bg: "#1f1203", card: "#362108", accent: "#eab308", text: "#fefce8", border: "#6e4513", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+        "Jumanji": { cat: "films", fontH: "MedievalSharp", fontB: "Inter", bg: "#081c0c", card: "#123318", accent: "#22c55e", text: "#f0fdf4", border: "#21542a", glow: "rgba(34, 197, 94, 0.4)", particle: "sparks" },
+
+        // SONGS
+        "Kanye West": { cat: "songs", fontH: "Orbitron", fontB: "Inter", bg: "#141414", card: "#242424", accent: "#eab308", text: "#f5f5f5", border: "#404040", glow: "rgba(234, 179, 8, 0.3)", particle: "grid" },
+        "Olivia Rodrigo": { cat: "songs", fontH: "Sacramento", fontB: "Inter", bg: "#1a0826", card: "#2f1042", accent: "#c084fc", text: "#faf5ff", border: "#5b2182", glow: "rgba(192, 132, 252, 0.4)", particle: "sparks" },
+        "Taylor Swift": { cat: "songs", fontH: "Alex Brush", fontB: "Inter", bg: "#230814", card: "#3b1025", accent: "#f472b6", text: "#fce7f3", border: "#73204c", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+        "Drake": { cat: "songs", fontH: "Cinzel", fontB: "Inter", bg: "#0a0a0c", card: "#16161a", accent: "#38bdf8", text: "#f8fafc", border: "#2d2d36", glow: "rgba(56, 189, 248, 0.3)", particle: "sparks" },
+        "Ariana Grande": { cat: "songs", fontH: "Sacramento", fontB: "Inter", bg: "#210915", card: "#381125", accent: "#f472b6", text: "#fce7f3", border: "#6e214a", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+        "Ethel Cain": { cat: "songs", fontH: "UnifrakturMaguntia", fontB: "Inter", bg: "#0d0b09", card: "#1a1612", accent: "#a1a1aa", text: "#f4f4f5", border: "#3f3f46", glow: "rgba(161, 161, 170, 0.3)", particle: "ember" },
+        "Tinashe": { cat: "songs", fontH: "Orbitron", fontB: "Inter", bg: "#17031a", card: "#2d0833", accent: "#f0abfc", text: "#fae8ff", border: "#591563", glow: "rgba(240, 171, 252, 0.4)", particle: "sparks" },
+        "Zara Larsson": { cat: "songs", fontH: "Great Vibes", fontB: "Inter", bg: "#031926", card: "#082e45", accent: "#38bdf8", text: "#f0f9ff", border: "#11527a", glow: "rgba(56, 189, 248, 0.4)", particle: "sparks" },
+        "RAYE": { cat: "songs", fontH: "Playfair Display", fontB: "Inter", bg: "#1a0808", card: "#301010", accent: "#f87171", text: "#fef2f2", border: "#612020", glow: "rgba(248, 113, 113, 0.4)", particle: "ember" },
+        "Adele": { cat: "songs", fontH: "Playfair Display", fontB: "Inter", bg: "#0f0f0f", card: "#1c1c1c", accent: "#d4af37", text: "#f5f5f5", border: "#383838", glow: "rgba(212, 175, 55, 0.3)", particle: "gold" },
+        "Keshi": { cat: "songs", fontH: "Playfair Display", fontB: "Inter", bg: "#0b0c10", card: "#1f2833", accent: "#66fcf1", text: "#c5c6c7", border: "#45a29e", glow: "rgba(102, 252, 241, 0.3)", particle: "sparks" },
+        "Miley Cyrus": { cat: "songs", fontH: "Great Vibes", fontB: "Inter", bg: "#290412", card: "#420a20", accent: "#fb7185", text: "#ffe4e6", border: "#7a173a", glow: "rgba(251, 113, 133, 0.4)", particle: "petals" },
+        "Beyoncé": { cat: "songs", fontH: "Cinzel", fontB: "Inter", bg: "#1a1300", card: "#332600", accent: "#eab308", text: "#fefce8", border: "#664d00", glow: "rgba(234, 179, 8, 0.4)", particle: "gold" },
+        "Lana Del Rey": { cat: "songs", fontH: "Sacramento", fontB: "Inter", bg: "#1f0a10", card: "#36131d", accent: "#fda4af", text: "#ffe4e6", border: "#6e2537", glow: "rgba(253, 164, 175, 0.4)", particle: "petals" },
+        "Lauv": { cat: "songs", fontH: "Great Vibes", fontB: "Inter", bg: "#061329", card: "#0d244a", accent: "#60a5fa", text: "#eff6ff", border: "#184282", glow: "rgba(96, 165, 250, 0.4)", particle: "sparks" },
+        "The Weeknd": { cat: "songs", fontH: "Orbitron", fontB: "Inter", bg: "#170206", card: "#2e050e", accent: "#f43f5e", text: "#ffe4e6", border: "#5e0c1e", glow: "rgba(244, 63, 94, 0.4)", particle: "ember" },
+        "Justin Bieber": { cat: "songs", fontH: "Great Vibes", fontB: "Inter", bg: "#041a1a", card: "#0a3030", accent: "#2dd4bf", text: "#ccfbf1", border: "#135454", glow: "rgba(45, 212, 191, 0.3)", particle: "sparks" },
+        "Sabrina Carpenter": { cat: "songs", fontH: "Sacramento", fontB: "Inter", bg: "#2b0a18", card: "#451329", accent: "#f472b6", text: "#fce7f3", border: "#7a224a", glow: "rgba(244, 114, 182, 0.4)", particle: "petals" },
+        "Troye Sivan": { cat: "songs", fontH: "Orbitron", fontB: "Inter", bg: "#1a0826", card: "#2d1040", accent: "#c084fc", text: "#faf5ff", border: "#58207a", glow: "rgba(192, 132, 252, 0.4)", particle: "sparks" }
+      }
+    };
+
+    // CONTENT FALLBACK & CUSTOM CONTENT GENERATOR
+    function getThemeContent(themeName) {
+      return {
+        tagline: `An unforgettable celebration inspired by ${themeName}.`,
+        dressCode: `Embrace the aesthetic of ${themeName}. Elegant attire with thematic color accents and statement accessories.`,
+        playlist: [
+          `Top Hits inspired by ${themeName}`,
+          `Acoustic Ambient Lounge Mix`,
+          `Cinematic & Aesthetic Soundtrack`
+        ],
+        cocktail: `Signature "${themeName} Sparkler" Cocktail / Mocktail`,
+        appetizers: `Artisanal tapas board, customized thematic bites, gourmet sliders`,
+        mainDish: `Seared prime entrees, organic seasonal roasted greens`,
+        dessert: `Custom vintage frosted birthday cake, thematic macarons, glitter cupcakes`,
+        decor: [
+          `Custom floral and balloon arches styled after ${themeName}`,
+          `Vintage cake table centerpiece with ornate golden piping`,
+          `Ambient LED lighting set to match theme signature colors`,
+          `Interactive photo booth with customized themed props`
+        ],
+        games: [
+          `${themeName} Trivia Challenge`,
+          `Best Dressed Costume / Outfit Contest`,
+          `Themed Photo Booth Competition & Polaroid Guestbook`
+        ],
+        checklist: [
+          "Send custom digital/printed invitations",
+          "Finalize venue setup & backdrop installation",
+          "Order custom vintage frosted cake & catering menu",
+          "Prepare themed playlist & background audio setup",
+          "Assemble party favor boxes & guest gifts"
+        ]
+      };
+    }
+
+    // MAIN APPLICATION CONTROLLER
+    class PartyApp {
+      constructor() {
+        this.currentView = 'landingView';
+        this.history = [];
+        this.selectedCategory = null;
+        this.selectedTheme = null;
+        this.bookmarks = JSON.parse(localStorage.getItem('party_bookmarks') || '[]');
+        this.checklistState = {};
+        
+        this.init();
+      }
+
+      init() {
+        this.renderCategories();
+        this.updateBookmarkBadge();
+        initParticles();
+      }
+
+      showView(viewId) {
+        if (this.currentView !== viewId) {
+          this.history.push(this.currentView);
+          this.currentView = viewId;
+        }
+
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(viewId);
+        if (target) target.classList.add('active');
+
+        const topNav = document.getElementById('topNav');
+        if (viewId === 'landingView') {
+          topNav.classList.add('hidden');
+        } else {
+          topNav.classList.remove('hidden');
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      goBack() {
+        if (this.history.length > 0) {
+          const prev = this.history.pop();
+          this.currentView = prev;
+          document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+          document.getElementById(prev).classList.add('active');
+
+          if (prev === 'landingView') {
+            document.getElementById('topNav').classList.add('hidden');
+          }
+        } else {
+          this.showView('categoryView');
+        }
+      }
+
+      renderCategories() {
+        const grid = document.getElementById('medallionsGrid');
+        grid.innerHTML = partyData.categories.map(cat => `
+          <div onclick="app.selectCategory('${cat.id}')" class="flex flex-col items-center cursor-pointer group">
+            <div class="w-24 h-24 md:w-28 md:h-28 rounded-full cake-border flex items-center justify-center text-3xl md:text-4xl transition transform group-hover:scale-110 shadow-lg" style="background-color: var(--card-bg); color: var(--accent-color);">
+              <i class="fa-solid ${cat.icon}"></i>
+            </div>
+            <h3 class="header-font text-xl font-bold mt-3 text-center" style="color: var(--text-color);">${cat.title}</h3>
+          </div>
+        `).join('');
+      }
+
+      selectCategory(catId) {
+        this.selectedCategory = catId;
+        const catObj = partyData.categories.find(c => c.id === catId);
+        document.getElementById('currentCategoryTitle').innerText = catObj.title;
+        document.getElementById('currentCategoryDesc').innerText = catObj.desc;
+
+        this.renderThemes(catId);
+        this.showView('subcategoryView');
+      }
+
+      renderThemes(catFilter = null, searchQuery = '') {
+        const grid = document.getElementById('themeCardsGrid');
+        let filtered = Object.entries(partyData.themes);
+
+        if (catFilter) {
+          filtered = filtered.filter(([name, data]) => data.cat === catFilter);
+        }
+
+        if (searchQuery.trim() !== '') {
+          const q = searchQuery.toLowerCase();
+          filtered = filtered.filter(([name]) => name.toLowerCase().includes(q));
+        }
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `<div class="col-span-full text-center py-12 opacity-70">No matching party themes found. Try another search query!</div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(([name, data]) => `
+          <div onclick="app.selectTheme('${name}')" class="theme-card rounded-2xl p-6 cursor-pointer flex flex-col justify-between" style="background-color: ${data.card}; border-color: ${data.border}; color: ${data.text};">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full inline-block mb-3" style="background-color: ${data.bg}; color: ${data.accent};">
+                ${data.cat}
+              </span>
+              <h3 class="text-2xl font-bold mb-2" style="font-family: '${data.fontH}', serif;">${name}</h3>
+            </div>
+            <div class="mt-6 flex justify-between items-center text-sm font-semibold" style="color: ${data.accent};">
+              <span>Explore Aesthetic</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      handleSearch(query) {
+        if (this.currentView !== 'subcategoryView') {
+          this.showView('subcategoryView');
+          document.getElementById('currentCategoryTitle').innerText = "Search Results";
+          document.getElementById('currentCategoryDesc').innerText = `Showing themes matching "${query}"`;
+        }
+        this.renderThemes(null, query);
+      }
+
+      selectTheme(themeName) {
+        this.selectedTheme = themeName;
+        const config = partyData.themes[themeName];
+        if (!config) return;
+
+        // Dynamic Engine: Morph CSS Custom Variables
+        document.documentElement.style.setProperty('--bg-color', config.bg);
+        document.documentElement.style.setProperty('--card-bg', config.card);
+        document.documentElement.style.setProperty('--accent-color', config.accent);
+        document.documentElement.style.setProperty('--text-color', config.text);
+        document.documentElement.style.setProperty('--border-color', config.border);
+        document.documentElement.style.setProperty('--glow-color', config.glow);
+        document.documentElement.style.setProperty('--font-header', `'${config.fontH}', serif`);
+
+        // Update Canvas Particle Type
+        setParticleType(config.particle || 'sparks', config.accent);
+
+        // Populate Content Screen
+        const content = getThemeContent(themeName);
+        document.getElementById('themeTitle').innerText = themeName;
+        document.getElementById('themeTagline').innerText = content.tagline;
+
+        // Palette Chips
+        const paletteContainer = document.getElementById('paletteChips');
+        paletteContainer.innerHTML = [config.bg, config.card, config.accent, config.border].map(c => `
+          <div class="w-8 h-8 rounded-full border-2 border-white/30 shadow-md" style="background-color: ${c};" title="${c}"></div>
+        `).join('');
+
+        // Vibe & Culinary
+        document.getElementById('dressCodeText').innerText = content.dressCode;
+        document.getElementById('playlistList').innerHTML = content.playlist.map(item => `<li>${item}</li>`).join('');
+        document.getElementById('cocktailText').innerText = content.cocktail;
+        document.getElementById('appetizerText').innerText = content.appetizers;
+        document.getElementById('mainDishText').innerText = content.mainDish;
+        document.getElementById('dessertText').innerText = content.dessert;
+
+        // Decor & Games
+        document.getElementById('decorList').innerHTML = content.decor.map(item => `<li>${item}</li>`).join('');
+        document.getElementById('gamesList').innerHTML = content.games.map(item => `<li>${item}</li>`).join('');
+
+        // Checklist Rendering
+        this.renderChecklist(content.checklist);
+
+        // Update Bookmark Icon
+        this.updateBookmarkButton();
+
+        this.showView('themeDetailView');
+      }
+
+      renderChecklist(items) {
+        const container = document.getElementById('checklistContainer');
+        this.checklistState = this.checklistState || {};
+        
+        container.innerHTML = items.map((item, idx) => {
+          const isChecked = !!this.checklistState[item];
+          return `
+            <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition hover:bg-black/5" style="border-color: var(--border-color);">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="app.toggleChecklistItem('${item}', this.checked)" class="w-5 h-5 rounded accent-current" style="color: var(--accent-color);">
+              <span class="text-sm ${isChecked ? 'line-through opacity-50' : ''}">${item}</span>
+            </label>
+          `;
+        }).join('');
+
+        this.updateChecklistProgress(items);
+      }
+
+      toggleChecklistItem(item, isChecked) {
+        this.checklistState[item] = isChecked;
+        const content = getThemeContent(this.selectedTheme);
+        this.renderChecklist(content.checklist);
+      }
+
+      updateChecklistProgress(items) {
+        const total = items.length;
+        const checkedCount = items.filter(i => this.checklistState[i]).length;
+        const percent = total === 0 ? 0 : Math.round((checkedCount / total) * 100);
+
+        document.getElementById('checklistPercent').innerText = `${percent}%`;
+        document.getElementById('checklistProgressBar').style.width = `${percent}%`;
+      }
+
+      toggleBookmarkCurrent() {
+        if (!this.selectedTheme) return;
+        const idx = this.bookmarks.indexOf(this.selectedTheme);
+        if (idx >= 0) {
+          this.bookmarks.splice(idx, 1);
+        } else {
+          this.bookmarks.push(this.selectedTheme);
+        }
+        localStorage.setItem('party_bookmarks', JSON.stringify(this.bookmarks));
+        this.updateBookmarkButton();
+        this.updateBookmarkBadge();
+        this.renderBookmarksList();
+      }
+
+      updateBookmarkButton() {
+        const icon = document.getElementById('bookmarkIcon');
+        if (this.bookmarks.includes(this.selectedTheme)) {
+          icon.className = 'fa-solid fa-bookmark text-xl';
+          icon.style.color = 'var(--accent-color)';
+        } else {
+          icon.className = 'fa-regular fa-bookmark text-xl';
+          icon.style.color = 'var(--text-color)';
+        }
+      }
+
+      updateBookmarkBadge() {
+        const badge = document.getElementById('bookmarkBadge');
+        if (this.bookmarks.length > 0) {
+          badge.innerText = this.bookmarks.length;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      toggleBookmarksDrawer() {
+        const drawer = document.getElementById('bookmarksDrawer');
+        drawer.classList.toggle('translate-x-full');
+        this.renderBookmarksList();
+      }
+
+      renderBookmarksList() {
+        const list = document.getElementById('bookmarksList');
+        if (this.bookmarks.length === 0) {
+          list.innerHTML = `<p class="text-xs opacity-60 text-center py-8">No saved party themes yet.</p>`;
+          return;
+        }
+
+        list.innerHTML = this.bookmarks.map(name => `
+          <div onclick="app.selectTheme('${name}'); app.toggleBookmarksDrawer();" class="p-3 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-black/5" style="border-color: var(--border-color);">
+            <span class="font-bold text-sm">${name}</span>
+            <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>
+          </div>
+        `).join('');
+      }
+
+      openInvitationModal() {
+        this.updateInvitationPreview();
+        document.getElementById('invitationModal').classList.remove('hidden');
+      }
+
+      closeInvitationModal() {
+        document.getElementById('invitationModal').classList.add('hidden');
+      }
+
+      updateInvitationPreview() {
+        const host = document.getElementById('invHost').value || "Sophia";
+        const dateVal = document.getElementById('invDate').value;
+        const timeVal = document.getElementById('invTime').value;
+        const loc = document.getElementById('invLocation').value || "The Grand Ballroom";
+
+        document.getElementById('cardHost').innerText = `${host}'s Celebration`;
+        document.getElementById('cardTheme').innerText = `Theme: ${this.selectedTheme || 'Custom Vintage Party'}`;
+        
+        let dateFormatted = dateVal;
+        if (dateVal) {
+          const d = new Date(dateVal);
+          dateFormatted = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+        
+        document.getElementById('cardDateTime').innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${dateFormatted} at ${timeVal}`;
+        document.getElementById('cardLoc').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${loc}`;
+      }
+    }
+
+    // CANVAS DYNAMIC PARTICLE SYSTEM
+    let canvas, ctx, particles = [], currentParticleType = 'sparks', accentColor = '#d4a373';
+
+    function initParticles() {
+      canvas = document.getElementById('particleCanvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      for (let i = 0; i < 40; i++) {
+        particles.push(createParticle());
+      }
+      animateParticles();
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function setParticleType(type, color) {
+      currentParticleType = type;
+      accentColor = color || '#d4a373';
+    }
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 3 + 1,
+        speedX: (Math.random() - 0.5) * 1,
+        speedY: (Math.random() - 0.5) * 1 - 0.2,
+        opacity: Math.random() * 0.7 + 0.3
+      };
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p, idx) => {
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+          particles[idx] = createParticle();
+        }
+
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.fillStyle = accentColor;
+
+        if (currentParticleType === 'petals') {
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, p.size * 2, p.size, Math.PI / 4, 0, 2 * Math.PI);
+          ctx.fill();
+        } else if (currentParticleType === 'snow') {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        } else if (currentParticleType === 'ember') {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff4d4d';
+          ctx.fill();
+        } else {
+          // Default Sparks/Gold
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    // Initialize App Instance
+    let app;
+    window.onload = function() {
+      app = new PartyApp();
+    };
+  </script>
+</body>
+</html>
